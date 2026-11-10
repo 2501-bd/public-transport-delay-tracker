@@ -8,4 +8,7 @@ logs/*.log
 
 # OS files
 .DS_Store
-
+# Generated and backup data
+data/live_updates.csv
+data/reprocessed_delays.csv
+data/raw/processed_delays_source.csv

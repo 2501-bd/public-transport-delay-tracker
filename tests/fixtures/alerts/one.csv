@@ -1,0 +1,4 @@
+service_date,trip_id,route_id,vehicle_id,stop_id,stop_sequence,scheduled_arrival_utc,actual_arrival_utc,delay_min,status,confidence
+2026-04-17,T-A,5,0968,45691,1,2026-04-18T00:40:00Z,2026-04-18T00:40:10Z,0.17,ON_TIME,medium
+2026-04-17,T-B,5,0970,45272,3,2026-04-18T00:50:00Z,2026-04-18T00:58:00Z,8.00,DELAYED,high
+2026-04-17,T-C,7,0981,45273,4,2026-04-18T01:00:00Z,2026-04-18T01:27:00Z,27.00,MAJOR_DELAY,high

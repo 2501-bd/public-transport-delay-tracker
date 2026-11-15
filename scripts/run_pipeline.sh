@@ -1,58 +1,41 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -uo pipefail
 
-# Get project root directory
-ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 LOG_DIR="$ROOT/logs"
-TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
-LOG_FILE="$LOG_DIR/pipeline_$TIMESTAMP.log"
+LOG_FILE="$LOG_DIR/pipeline_$(date +%Y%m%d_%H%M%S).log"
+RETENTION_DAYS=14
 
-# Ensure log directory exists
 mkdir -p "$LOG_DIR"
 
-# Redirect all output to both console and the timestamped log file
-exec > >(tee -a "$LOG_FILE") 2>&1
+log() { echo "$(date '+%F %T') [$1] $2" | tee -a "$LOG_FILE"; }
 
-echo "=========================================="
-echo "Starting Public Transport Pipeline: $(date)"
-echo "=========================================="
+run_step() {
+  local num="$1" name="$2" script="$3"
+  local path="$ROOT/scripts/$script"
 
-# Step 1: Data Ingestion (Person 1)
-echo "[1/4] Running Data Ingestion..."
-if [ -f "$ROOT/scripts/ingest.sh" ]; then
-    bash "$ROOT/scripts/ingest.sh"
-else
-    echo "ERROR: ingest.sh not found!"
+  log INFO "[$num/4] $name: starting"
+  if [ ! -f "$path" ]; then
+    log ERROR "$script not found"
     exit 1
-fi
+  fi
 
-# Step 2: Delay Processing (Person 2)
-echo "[2/4] Running Delay Processing..."
-if [ -f "$ROOT/scripts/process_delays.sh" ]; then
-    bash "$ROOT/scripts/process_delays.sh"
-else
-    echo "ERROR: process_delays.sh not found!"
-    exit 1
-fi
+  bash "$path" 2>&1 | tee -a "$LOG_FILE"
+  local code=${PIPESTATUS[0]}
 
-# Step 3: Report Generation (Person 3)
-echo "[3/4] Generating Reports & Charts..."
-if [ -f "$ROOT/scripts/generate_report.sh" ]; then
-    bash "$ROOT/scripts/generate_report.sh"
-else
-    echo "ERROR: generate_report.sh not found!"
-    exit 1
-fi
+  if [ "$code" -ne 0 ]; then
+    log ERROR "$name failed (exit code $code), pipeline aborted"
+    exit "$code"
+  fi
+  log INFO "$name: finished OK"
+}
 
-# Step 4: Alerts (Person 4)
-echo "[4/4] Checking and Sending Alerts..."
-if [ -f "$ROOT/scripts/send_alerts.sh" ]; then
-    bash "$ROOT/scripts/send_alerts.sh"
-else
-    echo "ERROR: send_alerts.sh not found!"
-    exit 1
-fi
+log INFO "========== Pipeline started =========="
+run_step 1 "Data Ingestion"     ingest.sh
+run_step 2 "Delay Processing"   process_delays.sh
+run_step 3 "Reports & Charts"   generate_report.sh
+run_step 4 "Alerts"             send_alerts.sh
+log INFO "========== Pipeline completed successfully =========="
 
-echo "=========================================="
-echo "Pipeline completed successfully at: $(date)"
-echo "=========================================="
+# Log rotation: delete pipeline logs older than $RETENTION_DAYS days
+find "$LOG_DIR" -name 'pipeline_*.log' -mtime +"$RETENTION_DAYS" -delete

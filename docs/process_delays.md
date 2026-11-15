@@ -7,11 +7,11 @@ Matches scheduled arrivals to live arrivals, computes delay in minutes, classifi
 ```bash
 scripts/process_delays.sh                       # uses data/timetable.csv, data/live_updates.csv -> data/processed_delays.csv
 scripts/process_delays.sh TT.csv LIVE.csv OUT.csv   # explicit paths
-CONFIG=/path/thresholds.conf scripts/process_delays.sh
+CONFIG=/path/to/config.sh scripts/process_delays.sh
 tests/run_tests.sh                              # test suite (hand-written fixtures)
 ```
 
-Exit codes: `0` ran (bad rows are counted, not fatal), `1` missing file / invalid config, `2` wrong header.
+Exit codes: `0` ran (bad rows are counted, not fatal), `1` missing file / invalid config, `2` wrong header. Prints `process_delays: starting` first and `process_delays: done -> <output>` last (stdout); the done line is not printed on failure. Works from any directory.
 A count summary (rows read, matched, rejected per reason) is printed to **stderr**. It is not a log file.
 
 ### Input schema (agreed with ingestion module)
@@ -40,14 +40,14 @@ Join key: `service_date + trip_id + stop_sequence`. `stop_id` is then cross-chec
 Duplicate live rows for one key: higher confidence wins (`high` > `medium`); on a tie, the later row in the file wins.
 Duplicate timetable keys: first row wins.
 
-### Thresholds (`config/thresholds.conf`)
+### Thresholds (shared `config/config.sh`)
 
 | Setting | Default | Meaning |
 |---|---|---|
 | `ON_TIME_MAX_MIN` | 5 | `delay_min <= 5` is ON_TIME (inclusive, includes early) |
 | `MAJOR_DELAY_MIN` | 15 | `delay_min >= 15` is MAJOR_DELAY (inclusive) |
 
-Anything in between is DELAYED. Boundaries are compared in whole seconds, so exactly 5.00 is ON_TIME and exactly 15.00 is MAJOR_DELAY. `ON_TIME_MAX_MIN` must be less than `MAJOR_DELAY_MIN`; invalid config stops the run (exit 1).
+The script reads these two plain `KEY=value` lines from `config/config.sh` (the shared config; `export` prefixes and trailing `# comments` are fine). Anything in between is DELAYED. Boundaries are compared in whole seconds, so exactly 5.00 is ON_TIME and exactly 15.00 is MAJOR_DELAY. `ON_TIME_MAX_MIN` must be less than `MAJOR_DELAY_MIN`; a missing or invalid value stops the run (exit 1). The values must exist in `config/config.sh`; this module has no thresholds file of its own.
 
 ### Output schema: `data/processed_delays.csv`
 
@@ -62,7 +62,7 @@ Wrong field count, empty field, bad confidence, non-numeric `stop_sequence`, mal
 
 ### Tests
 
-`tests/run_tests.sh` runs 9 checks: a fixture covering on-time, early, both boundaries, major delay, midnight crossing, duplicates, and each malformed-data case (compared to hand-written expected output and counts), plus custom thresholds, bad config, missing file, wrong header, empty live file and CRLF input.
+`tests/run_tests.sh` runs 14 checks: a fixture covering on-time, early, both boundaries, major delay, midnight crossing, duplicates, and each malformed-data case (compared to hand-written expected output and counts), plus custom thresholds, bad config, missing file, wrong header, empty live file and CRLF input.
 
 ### Known limitations
 

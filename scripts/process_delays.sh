@@ -2,13 +2,13 @@
 # process_delays.sh - Delay Calculation & Processing module.
 # Usage: scripts/process_delays.sh [timetable.csv] [live_updates.csv] [output.csv]
 # Defaults: data/timetable.csv  data/live_updates.csv  data/processed_delays.csv
-# Env:      CONFIG=path/to/thresholds.conf  (default config/thresholds.conf)
+# Env:      CONFIG=path/to/config.sh  (default config/config.sh; needs ON_TIME_MAX_MIN and MAJOR_DELAY_MIN)
 # Exit:     0 = ran (rejected rows are only counted), 1 = bad usage/config/file, 2 = bad header
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-CONFIG="${CONFIG:-$ROOT/config/thresholds.conf}"
+CONFIG="${CONFIG:-$ROOT/config/config.sh}"
 TIMETABLE="${1:-$ROOT/data/timetable.csv}"
 LIVE="${2:-$ROOT/data/live_updates.csv}"
 OUT="${3:-$ROOT/data/processed_delays.csv}"
@@ -17,13 +17,14 @@ TT_HEADER="service_date,trip_id,route_id,stop_id,stop_sequence,scheduled_arrival
 LIVE_HEADER="service_date,trip_id,vehicle_id,stop_id,stop_sequence,actual_arrival_utc,confidence"
 
 die() { echo "ERROR: $*" >&2; exit "${2:-1}"; }
+echo "process_delays: starting"
 
 [[ -r "$CONFIG"    ]] || die "config not readable: $CONFIG"
 [[ -r "$TIMETABLE" ]] || die "timetable not readable: $TIMETABLE"
 [[ -r "$LIVE"      ]] || die "live updates not readable: $LIVE"
 
-# Read thresholds (ignores comments, spaces, quotes, CRLF).
-get_conf() { grep -E "^[[:space:]]*$1=" "$CONFIG" | tail -n1 | cut -d= -f2- | tr -d ' \t\r"'"'"; }
+# Read thresholds from the shared config (plain KEY=value lines; "export", comments, quotes, CRLF tolerated).
+get_conf() { grep -E "^[[:space:]]*(export[[:space:]]+)?$1=" "$CONFIG" | tail -n1 | cut -d= -f2- | sed 's/#.*//' | tr -d ' \t\r"'"'"; }
 ON_TIME_MAX_MIN="$(get_conf ON_TIME_MAX_MIN || true)"
 MAJOR_DELAY_MIN="$(get_conf MAJOR_DELAY_MIN || true)"
 num_re='^[0-9]+(\.[0-9]+)?$'
@@ -125,3 +126,4 @@ END {
 
 mv "$TMP" "$OUT"
 trap - EXIT
+echo "process_delays: done -> $OUT"

@@ -62,7 +62,20 @@ Wrong field count, empty field, bad confidence, non-numeric `stop_sequence`, mal
 
 ### Tests
 
-`tests/run_tests.sh` runs 14 checks: a fixture covering on-time, early, both boundaries, major delay, midnight crossing, duplicates, and each malformed-data case (compared to hand-written expected output and counts), plus custom thresholds, bad config, missing file, wrong header, empty live file and CRLF input.
+Run `bash tests/run_tests.sh` (28 checks, prints `PASS`/`FAIL` per check and exits non-zero on any failure). Every expected value was worked out by hand, not copied from the script's output.
+
+| Checklist item | Test label | What it checks |
+|---|---|---|
+| Early arrivals | `[early]` | 30 s, 5 min and 20 min early give `-0.50`, `-5.00`, `-20.00` and status `ON_TIME` |
+| Midnight-crossing timestamps | `[midnight]` | Late across midnight (`23:58Z` to `00:04Z` = `6.00`), early across midnight (`-4.00`), year end (`2026-12-31` to `2027-01-01`), and 29 Feb / 28 Feb to 1 March in 2028 (leap), 2027, 2100 (not leap) and 2000 (leap) |
+| Invalid timestamps | `[invalid timestamp]` | `04.56AM`, a space instead of `T`, hour 25, month 13, missing `Z` and a `+05:30` offset are all rejected and counted; only the valid row is written; a bad scheduled time is rejected from the timetable |
+| Missing identifiers | `[missing id]` | An empty `trip_id`, `vehicle_id`, `stop_id`, `service_date` or `stop_sequence` is rejected, as is a row with a missing column; a timetable row with an empty `trip_id` is rejected |
+| Duplicate records | `[duplicate]` | `high` beats `medium` in either order; on a tie the later row wins; the first timetable row wins; counts of superseded and ignored duplicates are checked |
+| Threshold boundary cases | `[boundary]` | With 5 and 15 minutes: `0.00`, `4.98`, `5.00` are ON_TIME; `5.02`, `14.98` are DELAYED; `15.00`, `15.02` are MAJOR_DELAY. With decimal thresholds 2.5 and 7.5: `2.50` ON_TIME, `2.52` and `7.48` DELAYED, `7.50` MAJOR_DELAY |
+| Output schema | first two checks | The full output file (header, column order, formats) and the summary counts are compared with `tests/fixtures/expected_output.csv` and `expected_summary.txt` |
+| Other | unlabelled checks | Custom thresholds, `config.sh`-style config, invalid or missing config, missing file, wrong header, empty live file, CRLF input, start/done messages, running from another directory |
+
+Fixtures for the first two checks are in `tests/fixtures/`; the labelled cases build their small input files inside `tests/run_tests.sh` so each case sits next to its expected output.
 
 ### Known limitations
 

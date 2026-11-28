@@ -1,0 +1,14 @@
+report_type,route_id,total_records,average_delay_min,max_delay_min,on_time_records,delayed_records,major_delay_records
+overall,ALL,8066,1.86,34.02,7154,797,115
+route,3E,1327,1.37,15.52,1195,129,3
+route,2S,347,0.28,5.97,343,4,0
+route,4S,482,-0.39,2.83,482,0,0
+route,2W,458,0.33,4.40,458,0,0
+route,3W,1096,3.35,32.07,853,225,18
+route,4W,497,0.74,8.73,484,13,0
+route,1,496,1.96,8.20,468,28,0
+route,5,477,-0.01,3.83,477,0,0
+route,6,693,6.81,34.02,324,275,94
+route,7,1066,1.77,9.57,1010,56,0
+route,9,932,1.72,9.87,871,61,0
+route,11,195,-0.22,12.90,189,6,0

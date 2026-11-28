@@ -12,3 +12,4 @@ logs/*.log
 data/live_updates.csv
 data/reprocessed_delays.csv
 data/raw/processed_delays_source.csv
+logs/alerts.log

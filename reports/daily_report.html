@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TransitIQ | Operations Dashboard</title>
+
+<style>
+:root {
+    --bg: #f4f6fa;
+    --panel: #ffffff;
+    --navy: #172554;
+    --blue: #315efb;
+    --text: #202b40;
+    --muted: #78849a;
+    --border: #e7ebf2;
+    --green: #13865c;
+    --red: #d94c4c;
+    --shadow: 0 5px 22px rgba(25, 42, 75, 0.05);
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+}
+
+.layout {
+    display: flex;
+    min-height: 100vh;
+}
+
+.sidebar {
+    width: 245px;
+    background: var(--navy);
+    color: white;
+    padding: 30px 20px;
+    flex-shrink: 0;
+}
+
+.brand {
+    font-size: 23px;
+    font-weight: 800;
+    letter-spacing: -0.7px;
+    margin-bottom: 8px;
+}
+
+.brand span { color: #8ca8ff; }
+
+.tagline {
+    color: #aab7d3;
+    font-size: 12px;
+    margin-bottom: 42px;
+}
+
+.nav-label {
+    color: #8998b9;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    margin: 25px 10px 12px;
+}
+
+.nav a {
+    display: block;
+    padding: 12px 13px;
+    margin: 5px 0;
+    border-radius: 8px;
+    color: #d5def2;
+    text-decoration: none;
+    font-size: 13px;
+}
+
+.nav a:hover, .nav a.active {
+    background: #293c70;
+    color: white;
+}
+
+.main {
+    flex: 1;
+    min-width: 0;
+    padding: 32px;
+}
+
+.topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 28px;
+}
+
+h1 {
+    margin: 0;
+    font-size: 26px;
+    letter-spacing: -0.6px;
+}
+
+.subtitle {
+    color: var(--muted);
+    font-size: 13px;
+    margin-top: 7px;
+}
+
+.status {
+    background: #e6f5ed;
+    color: var(--green);
+    padding: 9px 13px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+    white-space: nowrap;
+}
+
+.section-title {
+    font-size: 17px;
+    margin: 30px 0 15px;
+}
+
+.cards {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.card, .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 13px;
+    box-shadow: var(--shadow);
+}
+
+.card { padding: 20px; }
+
+.card-label {
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.card-value {
+    font-size: 27px;
+    font-weight: 750;
+    margin: 12px 0 5px;
+    letter-spacing: -0.8px;
+}
+
+.card-note {
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.blue { color: var(--blue); }
+.green { color: var(--green); }
+.red { color: var(--red); }
+
+.panel { padding: 22px; margin-bottom: 20px; }
+
+.panel-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 18px;
+}
+
+.panel-heading h3 {
+    font-size: 15px;
+    margin: 0;
+}
+
+.panel-heading span {
+    font-size: 11px;
+    color: var(--muted);
+}
+
+.chart {
+    width: 100%;
+    max-height: 460px;
+    object-fit: contain;
+    display: block;
+}
+
+.table-wrap {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+th {
+    background: #f5f7fb;
+    color: #68758c;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+th, td {
+    padding: 13px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+}
+
+tbody tr:hover { background: #f8faff; }
+
+.search {
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 12px;
+    width: 220px;
+    outline: none;
+}
+
+.search:focus { border-color: var(--blue); }
+
+.pill {
+    display: inline-block;
+    padding: 5px 8px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: bold;
+}
+
+.pill.success {
+    background: #e5f5ed;
+    color: var(--green);
+}
+
+.pill.warning {
+    background: #fff1df;
+    color: #b36b12;
+}
+
+.pill.danger {
+    background: #fdeaea;
+    color: var(--red);
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 15px;
+}
+
+.info-box {
+    background: #f7f9fd;
+    border-radius: 9px;
+    padding: 17px;
+}
+
+.info-label {
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.info-value {
+    font-size: 20px;
+    font-weight: bold;
+    margin-top: 8px;
+}
+
+.footer {
+    color: var(--muted);
+    text-align: center;
+    font-size: 11px;
+    padding: 25px 0 5px;
+}
+
+@media(max-width: 1050px) {
+    .cards { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media(max-width: 700px) {
+    .layout { display: block; }
+    .sidebar { width: 100%; padding: 20px; }
+    .tagline { margin-bottom: 15px; }
+    .nav { display: flex; flex-wrap: wrap; }
+    .nav-label { display: none; }
+    .nav a { padding: 9px; }
+    .main { padding: 20px 14px; }
+    .cards { grid-template-columns: 1fr 1fr; }
+    .info-grid { grid-template-columns: 1fr; }
+    .topbar { align-items: flex-start; flex-direction: column; }
+}
+
+@media(max-width: 400px) {
+    .cards { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+
+<body>
+<div class="layout">
+
+<aside class="sidebar">
+    <div class="brand">Transit<span>IQ</span></div>
+    <div class="tagline">PUBLIC TRANSPORT INTELLIGENCE</div>
+
+    <div class="nav-label">WORKSPACE</div>
+    <nav class="nav">
+        <a class="active" href="#overview">Overview</a>
+        <a href="#analytics">Route Analytics</a>
+        <a href="#routes">Route Performance</a>
+        <a href="#alerts">Alert Centre</a>
+    </nav>
+
+    <div class="nav-label">SYSTEM</div>
+    <nav class="nav">
+        <a href="#data">Data Ingestion</a>
+        <a href="#pipeline">Pipeline Activity</a>
+    </nav>
+</aside>
+
+<main class="main">
+
+<header class="topbar">
+    <div>
+        <h1>Operations Overview</h1>
+        <div class="subtitle">
+            Public transport punctuality and delay monitoring
+        </div>
+    </div>
+    <div class="status">● Generated report</div>
+</header>
+
+<section id="overview">
+    <div class="section-title">Network Performance</div>
+
+    <div class="cards">
+        <div class="card">
+            <div class="card-label">Total Stop Records</div>
+            <div class="card-value">8066</div>
+            <div class="card-note">Processed records</div>
+        </div>
+
+        <div class="card">
+            <div class="card-label">Average Delay</div>
+            <div class="card-value blue">1.86 <small>min</small></div>
+            <div class="card-note">Across all records</div>
+        </div>
+
+        <div class="card">
+            <div class="card-label">On-Time Performance</div>
+            <div class="card-value green">88.69%</div>
+            <div class="card-note">7154 on-time records</div>
+        </div>
+
+        <div class="card">
+            <div class="card-label">Major-Delay Records</div>
+            <div class="card-value red">115</div>
+            <div class="card-note">Delay of 15 minutes or more</div>
+        </div>
+    </div>
+
+    <div class="cards" style="margin-top:16px">
+        <div class="card">
+            <div class="card-label">Maximum Delay</div>
+            <div class="card-value">34.02 <small>min</small></div>
+            <div class="card-note">Highest recorded delay</div>
+        </div>
+        <div class="card">
+            <div class="card-label">Delayed Records</div>
+            <div class="card-value">797</div>
+            <div class="card-note">Includes major delays</div>
+        </div>
+        <div class="card">
+            <div class="card-label">Routes Analysed</div>
+            <div class="card-value">12</div>
+            <div class="card-note">Routes in summary report</div>
+        </div>
+        <div class="card">
+            <div class="card-label">Alert Threshold</div>
+            <div class="card-value">15 <small>min</small></div>
+            <div class="card-note">Major-delay classification</div>
+        </div>
+    </div>
+</section>
+
+<section id="analytics">
+    <div class="section-title">Route Analytics</div>
+    <div class="panel">
+        <div class="panel-heading">
+            <h3>Average Delay by Route</h3>
+            <span>GNUplot generated</span>
+        </div>
+        <img class="chart" src="charts/average_delay_by_route.png"
+             alt="Average delay by route">
+    </div>
+</section>
+
+<section id="routes">
+    <div class="section-title">Route Performance</div>
+    <div class="panel">
+        <div class="panel-heading">
+            <h3>Route-wise Statistics</h3>
+            <input id="routeSearch" class="search"
+                   type="search" placeholder="Search route...">
+        </div>
+
+        <div class="table-wrap">
+        <table id="routeTable">
+            <thead>
+            <tr>
+                <th>Route</th>
+                <th>Records</th>
+                <th>Avg Delay</th>
+                <th>Max Delay</th>
+                <th>On Time</th>
+                <th>Delayed</th>
+                <th>Major Delays</th>
+            </tr>
+            </thead>
+            <tbody>
+<tr><td>3E</td><td>1327</td><td>1.37 min</td><td>15.52 min</td><td>1195</td><td>129</td><td>3</td></tr>
+<tr><td>2S</td><td>347</td><td>0.28 min</td><td>5.97 min</td><td>343</td><td>4</td><td>0</td></tr>
+<tr><td>4S</td><td>482</td><td>-0.39 min</td><td>2.83 min</td><td>482</td><td>0</td><td>0</td></tr>
+<tr><td>2W</td><td>458</td><td>0.33 min</td><td>4.40 min</td><td>458</td><td>0</td><td>0</td></tr>
+<tr><td>3W</td><td>1096</td><td>3.35 min</td><td>32.07 min</td><td>853</td><td>225</td><td>18</td></tr>
+<tr><td>4W</td><td>497</td><td>0.74 min</td><td>8.73 min</td><td>484</td><td>13</td><td>0</td></tr>
+<tr><td>1</td><td>496</td><td>1.96 min</td><td>8.20 min</td><td>468</td><td>28</td><td>0</td></tr>
+<tr><td>5</td><td>477</td><td>-0.01 min</td><td>3.83 min</td><td>477</td><td>0</td><td>0</td></tr>
+<tr><td>6</td><td>693</td><td>6.81 min</td><td>34.02 min</td><td>324</td><td>275</td><td>94</td></tr>
+<tr><td>7</td><td>1066</td><td>1.77 min</td><td>9.57 min</td><td>1010</td><td>56</td><td>0</td></tr>
+<tr><td>9</td><td>932</td><td>1.72 min</td><td>9.87 min</td><td>871</td><td>61</td><td>0</td></tr>
+<tr><td>11</td><td>195</td><td>-0.22 min</td><td>12.90 min</td><td>189</td><td>6</td><td>0</td></tr>
+            </tbody>
+        </table>
+        </div>
+    </div>
+</section>
+
+<section id="alerts">
+    <div class="section-title">Alert Centre</div>
+    <div class="panel">
+        <div class="panel-heading">
+            <h3>Major-Delay Records</h3>
+            <span class="pill danger">115 records ≥ 15 min</span>
+        </div>
+
+        <div class="table-wrap">
+        <table id="alertTable">
+            <thead>
+            <tr>
+                <th>Service Date</th>
+                <th>Route</th>
+                <th>Trip ID</th>
+                <th>Vehicle</th>
+                <th>Stop</th>
+                <th>Delay</th>
+            </tr>
+            </thead>
+            <tbody>
+<tr><td>2026-04-18</td><td>6</td><td>0eca22e7-bc7f-4abf-af16-8112d5682bcd-3c9aef7b-e</td><td>2505</td><td>45670</td><td><span class="pill danger">15.10 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>0eca22e7-bc7f-4abf-af16-8112d5682bcd-3c9aef7b-e</td><td>2505</td><td>45660</td><td><span class="pill danger">16.38 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>0eca22e7-bc7f-4abf-af16-8112d5682bcd-3c9aef7b-e</td><td>2505</td><td>45659</td><td><span class="pill danger">17.33 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>0eca22e7-bc7f-4abf-af16-8112d5682bcd-3c9aef7b-e</td><td>2505</td><td>45515</td><td><span class="pill danger">18.08 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>0eca22e7-bc7f-4abf-af16-8112d5682bcd-3c9aef7b-e</td><td>2505</td><td>45516</td><td><span class="pill danger">17.85 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>0eca22e7-bc7f-4abf-af16-8112d5682bcd-3c9aef7b-e</td><td>2505</td><td>45521</td><td><span class="pill danger">18.42 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>0eca22e7-bc7f-4abf-af16-8112d5682bcd-3c9aef7b-e</td><td>2505</td><td>45421</td><td><span class="pill danger">18.73 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>0eca22e7-bc7f-4abf-af16-8112d5682bcd-3c9aef7b-e</td><td>2505</td><td>45528</td><td><span class="pill danger">18.43 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>0eca22e7-bc7f-4abf-af16-8112d5682bcd-3c9aef7b-e</td><td>2505</td><td>45526</td><td><span class="pill danger">18.68 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>3c3c0924-3c0e-4a0a-baeb-7239daa3ffc0-3c9aef7b-e</td><td>2505</td><td>45838</td><td><span class="pill danger">15.37 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>3c3c0924-3c0e-4a0a-baeb-7239daa3ffc0-3c9aef7b-e</td><td>2505</td><td>45670</td><td><span class="pill danger">16.05 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>3c3c0924-3c0e-4a0a-baeb-7239daa3ffc0-3c9aef7b-e</td><td>2505</td><td>45660</td><td><span class="pill danger">20.58 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>3c3c0924-3c0e-4a0a-baeb-7239daa3ffc0-3c9aef7b-e</td><td>2505</td><td>45659</td><td><span class="pill danger">20.28 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>3c3c0924-3c0e-4a0a-baeb-7239daa3ffc0-3c9aef7b-e</td><td>2505</td><td>45515</td><td><span class="pill danger">20.87 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>3c3c0924-3c0e-4a0a-baeb-7239daa3ffc0-3c9aef7b-e</td><td>2505</td><td>45516</td><td><span class="pill danger">20.58 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>3c3c0924-3c0e-4a0a-baeb-7239daa3ffc0-3c9aef7b-e</td><td>2505</td><td>45521</td><td><span class="pill danger">20.13 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>3c3c0924-3c0e-4a0a-baeb-7239daa3ffc0-3c9aef7b-e</td><td>2505</td><td>45421</td><td><span class="pill danger">20.23 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>3c3c0924-3c0e-4a0a-baeb-7239daa3ffc0-3c9aef7b-e</td><td>2505</td><td>45526</td><td><span class="pill danger">20.03 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>3c3c0924-3c0e-4a0a-baeb-7239daa3ffc0-3c9aef7b-e</td><td>2505</td><td>45427</td><td><span class="pill danger">19.63 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>3c3c0924-3c0e-4a0a-baeb-7239daa3ffc0-3c9aef7b-e</td><td>2505</td><td>45806</td><td><span class="pill danger">19.50 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>4e376c44-39ff-4dc4-a89f-b433af171593-3c9aef7b-e</td><td>2505</td><td>45807</td><td><span class="pill danger">18.30 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>4e376c44-39ff-4dc4-a89f-b433af171593-3c9aef7b-e</td><td>2505</td><td>45358</td><td><span class="pill danger">18.58 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>4e376c44-39ff-4dc4-a89f-b433af171593-3c9aef7b-e</td><td>2505</td><td>45357</td><td><span class="pill danger">19.55 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>4e376c44-39ff-4dc4-a89f-b433af171593-3c9aef7b-e</td><td>2505</td><td>45356</td><td><span class="pill danger">20.47 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>4e376c44-39ff-4dc4-a89f-b433af171593-3c9aef7b-e</td><td>2505</td><td>45168</td><td><span class="pill danger">20.50 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>4e376c44-39ff-4dc4-a89f-b433af171593-3c9aef7b-e</td><td>2505</td><td>45354</td><td><span class="pill danger">20.77 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>4e376c44-39ff-4dc4-a89f-b433af171593-3c9aef7b-e</td><td>2505</td><td>45353</td><td><span class="pill danger">21.00 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>4e376c44-39ff-4dc4-a89f-b433af171593-3c9aef7b-e</td><td>2505</td><td>45169</td><td><span class="pill danger">20.50 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>4e376c44-39ff-4dc4-a89f-b433af171593-3c9aef7b-e</td><td>2505</td><td>45193</td><td><span class="pill danger">21.77 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>4e376c44-39ff-4dc4-a89f-b433af171593-3c9aef7b-e</td><td>2505</td><td>45364</td><td><span class="pill danger">21.08 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>4e376c44-39ff-4dc4-a89f-b433af171593-3c9aef7b-e</td><td>2505</td><td>45639</td><td><span class="pill danger">17.70 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>4e376c44-39ff-4dc4-a89f-b433af171593-3c9aef7b-e</td><td>2505</td><td>45834</td><td><span class="pill danger">19.47 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>4e376c44-39ff-4dc4-a89f-b433af171593-3c9aef7b-e</td><td>2505</td><td>45833</td><td><span class="pill danger">20.02 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>4e376c44-39ff-4dc4-a89f-b433af171593-3c9aef7b-e</td><td>2505</td><td>45846</td><td><span class="pill danger">20.77 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>4e376c44-39ff-4dc4-a89f-b433af171593-3c9aef7b-e</td><td>2505</td><td>45362</td><td><span class="pill danger">21.42 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>4e376c44-39ff-4dc4-a89f-b433af171593-3c9aef7b-e</td><td>2505</td><td>45396</td><td><span class="pill danger">23.03 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>4e376c44-39ff-4dc4-a89f-b433af171593-3c9aef7b-e</td><td>2505</td><td>45368</td><td><span class="pill danger">23.52 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>4e376c44-39ff-4dc4-a89f-b433af171593-3c9aef7b-e</td><td>2505</td><td>45366</td><td><span class="pill danger">23.55 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>4e376c44-39ff-4dc4-a89f-b433af171593-3c9aef7b-e</td><td>2505</td><td>45629</td><td><span class="pill danger">24.48 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>4e376c44-39ff-4dc4-a89f-b433af171593-3c9aef7b-e</td><td>2505</td><td>45147</td><td><span class="pill danger">25.82 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>4e376c44-39ff-4dc4-a89f-b433af171593-3c9aef7b-e</td><td>2505</td><td>45400</td><td><span class="pill danger">26.03 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>4e376c44-39ff-4dc4-a89f-b433af171593-3c9aef7b-e</td><td>2505</td><td>45399</td><td><span class="pill danger">25.75 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>5ac884ec-cd73-4d1d-a0be-2cad2306f386-3c9aef7b-e</td><td>2505</td><td>45400</td><td><span class="pill danger">33.22 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>5ac884ec-cd73-4d1d-a0be-2cad2306f386-3c9aef7b-e</td><td>2505</td><td>45564</td><td><span class="pill danger">32.55 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>5ac884ec-cd73-4d1d-a0be-2cad2306f386-3c9aef7b-e</td><td>2505</td><td>45399</td><td><span class="pill danger">33.57 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>5ac884ec-cd73-4d1d-a0be-2cad2306f386-3c9aef7b-e</td><td>2505</td><td>45847</td><td><span class="pill danger">34.02 min</span></td></tr>
+<tr><td>2026-04-19</td><td>6</td><td>5f201558-fbac-4011-841d-7f70eaee84f6-cac8f033-c</td><td>2505</td><td>45670</td><td><span class="pill danger">15.00 min</span></td></tr>
+<tr><td>2026-04-19</td><td>6</td><td>5f201558-fbac-4011-841d-7f70eaee84f6-cac8f033-c</td><td>2505</td><td>45660</td><td><span class="pill danger">19.60 min</span></td></tr>
+<tr><td>2026-04-19</td><td>6</td><td>5f201558-fbac-4011-841d-7f70eaee84f6-cac8f033-c</td><td>2505</td><td>45659</td><td><span class="pill danger">19.35 min</span></td></tr>
+<tr><td>2026-04-19</td><td>6</td><td>5f201558-fbac-4011-841d-7f70eaee84f6-cac8f033-c</td><td>2505</td><td>45515</td><td><span class="pill danger">19.68 min</span></td></tr>
+<tr><td>2026-04-19</td><td>6</td><td>5f201558-fbac-4011-841d-7f70eaee84f6-cac8f033-c</td><td>2505</td><td>45516</td><td><span class="pill danger">19.45 min</span></td></tr>
+<tr><td>2026-04-19</td><td>6</td><td>5f201558-fbac-4011-841d-7f70eaee84f6-cac8f033-c</td><td>2505</td><td>45521</td><td><span class="pill danger">19.52 min</span></td></tr>
+<tr><td>2026-04-19</td><td>6</td><td>5f201558-fbac-4011-841d-7f70eaee84f6-cac8f033-c</td><td>2505</td><td>45421</td><td><span class="pill danger">19.95 min</span></td></tr>
+<tr><td>2026-04-19</td><td>6</td><td>5f201558-fbac-4011-841d-7f70eaee84f6-cac8f033-c</td><td>2505</td><td>45528</td><td><span class="pill danger">19.88 min</span></td></tr>
+<tr><td>2026-04-19</td><td>6</td><td>5f201558-fbac-4011-841d-7f70eaee84f6-cac8f033-c</td><td>2505</td><td>45526</td><td><span class="pill danger">20.57 min</span></td></tr>
+<tr><td>2026-04-19</td><td>6</td><td>5f201558-fbac-4011-841d-7f70eaee84f6-cac8f033-c</td><td>2505</td><td>45427</td><td><span class="pill danger">20.37 min</span></td></tr>
+<tr><td>2026-04-19</td><td>6</td><td>5f201558-fbac-4011-841d-7f70eaee84f6-cac8f033-c</td><td>2505</td><td>45806</td><td><span class="pill danger">20.15 min</span></td></tr>
+<tr><td>2026-04-19</td><td>6</td><td>76ee05ca-dfaa-4364-bb52-93f4366c7c16-cac8f033-c</td><td>2505</td><td>45660</td><td><span class="pill danger">16.17 min</span></td></tr>
+<tr><td>2026-04-19</td><td>6</td><td>76ee05ca-dfaa-4364-bb52-93f4366c7c16-cac8f033-c</td><td>2505</td><td>45659</td><td><span class="pill danger">16.17 min</span></td></tr>
+<tr><td>2026-04-19</td><td>6</td><td>76ee05ca-dfaa-4364-bb52-93f4366c7c16-cac8f033-c</td><td>2505</td><td>45515</td><td><span class="pill danger">16.77 min</span></td></tr>
+<tr><td>2026-04-19</td><td>6</td><td>76ee05ca-dfaa-4364-bb52-93f4366c7c16-cac8f033-c</td><td>2505</td><td>45516</td><td><span class="pill danger">16.63 min</span></td></tr>
+<tr><td>2026-04-19</td><td>6</td><td>76ee05ca-dfaa-4364-bb52-93f4366c7c16-cac8f033-c</td><td>2505</td><td>45421</td><td><span class="pill danger">16.73 min</span></td></tr>
+<tr><td>2026-04-19</td><td>6</td><td>76ee05ca-dfaa-4364-bb52-93f4366c7c16-cac8f033-c</td><td>2505</td><td>45526</td><td><span class="pill danger">17.02 min</span></td></tr>
+<tr><td>2026-04-19</td><td>6</td><td>76ee05ca-dfaa-4364-bb52-93f4366c7c16-cac8f033-c</td><td>2505</td><td>45427</td><td><span class="pill danger">16.68 min</span></td></tr>
+<tr><td>2026-04-19</td><td>6</td><td>76ee05ca-dfaa-4364-bb52-93f4366c7c16-cac8f033-c</td><td>2505</td><td>45806</td><td><span class="pill danger">16.62 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>9d9a582a-3051-4b21-9ac7-124e71db1078-3c9aef7b-e</td><td>2505</td><td>45670</td><td><span class="pill danger">16.73 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>9d9a582a-3051-4b21-9ac7-124e71db1078-3c9aef7b-e</td><td>2505</td><td>45660</td><td><span class="pill danger">18.98 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>9d9a582a-3051-4b21-9ac7-124e71db1078-3c9aef7b-e</td><td>2505</td><td>45659</td><td><span class="pill danger">18.43 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>9d9a582a-3051-4b21-9ac7-124e71db1078-3c9aef7b-e</td><td>2505</td><td>45515</td><td><span class="pill danger">18.68 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>9d9a582a-3051-4b21-9ac7-124e71db1078-3c9aef7b-e</td><td>2505</td><td>45516</td><td><span class="pill danger">18.67 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>9d9a582a-3051-4b21-9ac7-124e71db1078-3c9aef7b-e</td><td>2505</td><td>45421</td><td><span class="pill danger">18.60 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>9d9a582a-3051-4b21-9ac7-124e71db1078-3c9aef7b-e</td><td>2505</td><td>45526</td><td><span class="pill danger">18.50 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>9d9a582a-3051-4b21-9ac7-124e71db1078-3c9aef7b-e</td><td>2505</td><td>45427</td><td><span class="pill danger">17.97 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>9d9a582a-3051-4b21-9ac7-124e71db1078-3c9aef7b-e</td><td>2505</td><td>45806</td><td><span class="pill danger">17.50 min</span></td></tr>
+<tr><td>2026-04-18</td><td>3E</td><td>a335743e-2-3c9aef7b-e</td><td>2504</td><td>45634</td><td><span class="pill danger">15.38 min</span></td></tr>
+<tr><td>2026-04-18</td><td>3E</td><td>a335743e-2-3c9aef7b-e</td><td>2504</td><td>45638</td><td><span class="pill danger">15.52 min</span></td></tr>
+<tr><td>2026-04-18</td><td>3E</td><td>a335743e-2-3c9aef7b-e</td><td>2504</td><td>45275</td><td><span class="pill danger">15.45 min</span></td></tr>
+<tr><td>2026-04-18</td><td>3W</td><td>b0005cd4-3-3c9aef7b-e</td><td>2504</td><td>45203</td><td><span class="pill danger">18.35 min</span></td></tr>
+<tr><td>2026-04-18</td><td>3W</td><td>b0005cd4-3-3c9aef7b-e</td><td>2504</td><td>45205</td><td><span class="pill danger">27.60 min</span></td></tr>
+<tr><td>2026-04-18</td><td>3W</td><td>b0005cd4-3-3c9aef7b-e</td><td>2504</td><td>45376</td><td><span class="pill danger">28.47 min</span></td></tr>
+<tr><td>2026-04-18</td><td>3W</td><td>b0005cd4-3-3c9aef7b-e</td><td>2504</td><td>45718</td><td><span class="pill danger">29.32 min</span></td></tr>
+<tr><td>2026-04-18</td><td>3W</td><td>b0005cd4-3-3c9aef7b-e</td><td>2504</td><td>45714</td><td><span class="pill danger">29.57 min</span></td></tr>
+<tr><td>2026-04-18</td><td>3W</td><td>b0005cd4-3-3c9aef7b-e</td><td>2504</td><td>45740</td><td><span class="pill danger">29.48 min</span></td></tr>
+<tr><td>2026-04-18</td><td>3W</td><td>b0005cd4-3-3c9aef7b-e</td><td>2504</td><td>45129</td><td><span class="pill danger">28.98 min</span></td></tr>
+<tr><td>2026-04-18</td><td>3W</td><td>b0005cd4-3-3c9aef7b-e</td><td>2504</td><td>45426</td><td><span class="pill danger">30.68 min</span></td></tr>
+<tr><td>2026-04-18</td><td>3W</td><td>b0005cd4-3-3c9aef7b-e</td><td>2504</td><td>45202</td><td><span class="pill danger">32.05 min</span></td></tr>
+<tr><td>2026-04-18</td><td>3W</td><td>b0005cd4-3-3c9aef7b-e</td><td>2504</td><td>45201</td><td><span class="pill danger">32.00 min</span></td></tr>
+<tr><td>2026-04-18</td><td>3W</td><td>b0005cd4-3-3c9aef7b-e</td><td>2504</td><td>45123</td><td><span class="pill danger">32.07 min</span></td></tr>
+<tr><td>2026-04-18</td><td>3W</td><td>b0005cd4-3-3c9aef7b-e</td><td>2504</td><td>45124</td><td><span class="pill danger">31.98 min</span></td></tr>
+<tr><td>2026-04-18</td><td>3W</td><td>b0005cd4-3-3c9aef7b-e</td><td>2504</td><td>45374</td><td><span class="pill danger">31.58 min</span></td></tr>
+<tr><td>2026-04-18</td><td>3W</td><td>b0005cd4-3-3c9aef7b-e</td><td>2504</td><td>45125</td><td><span class="pill danger">31.43 min</span></td></tr>
+<tr><td>2026-04-18</td><td>3W</td><td>b0005cd4-3-3c9aef7b-e</td><td>2504</td><td>45126</td><td><span class="pill danger">31.45 min</span></td></tr>
+<tr><td>2026-04-18</td><td>3W</td><td>b0005cd4-3-3c9aef7b-e</td><td>2504</td><td>45121</td><td><span class="pill danger">31.78 min</span></td></tr>
+<tr><td>2026-04-18</td><td>3W</td><td>b0005cd4-3-3c9aef7b-e</td><td>2504</td><td>45122</td><td><span class="pill danger">31.87 min</span></td></tr>
+<tr><td>2026-04-18</td><td>3W</td><td>b0005cd4-3-3c9aef7b-e</td><td>2504</td><td>45695</td><td><span class="pill danger">31.83 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>bf0d86d0-78d2-4cee-95d7-e9949f5ce0a0-3c9aef7b-e</td><td>2505</td><td>45547</td><td><span class="pill danger">18.70 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>bf0d86d0-78d2-4cee-95d7-e9949f5ce0a0-3c9aef7b-e</td><td>2505</td><td>45212</td><td><span class="pill danger">18.85 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>bf0d86d0-78d2-4cee-95d7-e9949f5ce0a0-3c9aef7b-e</td><td>2505</td><td>45249</td><td><span class="pill danger">18.60 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>bf0d86d0-78d2-4cee-95d7-e9949f5ce0a0-3c9aef7b-e</td><td>2505</td><td>45492</td><td><span class="pill danger">19.10 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>bf0d86d0-78d2-4cee-95d7-e9949f5ce0a0-3c9aef7b-e</td><td>2505</td><td>45593</td><td><span class="pill danger">21.32 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>bf0d86d0-78d2-4cee-95d7-e9949f5ce0a0-3c9aef7b-e</td><td>2505</td><td>45630</td><td><span class="pill danger">22.38 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>bf0d86d0-78d2-4cee-95d7-e9949f5ce0a0-3c9aef7b-e</td><td>2505</td><td>45594</td><td><span class="pill danger">23.48 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>bf0d86d0-78d2-4cee-95d7-e9949f5ce0a0-3c9aef7b-e</td><td>2505</td><td>45599</td><td><span class="pill danger">24.25 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>bf0d86d0-78d2-4cee-95d7-e9949f5ce0a0-3c9aef7b-e</td><td>2505</td><td>45435</td><td><span class="pill danger">25.35 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>bf0d86d0-78d2-4cee-95d7-e9949f5ce0a0-3c9aef7b-e</td><td>2505</td><td>45835</td><td><span class="pill danger">24.95 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>bf0d86d0-78d2-4cee-95d7-e9949f5ce0a0-3c9aef7b-e</td><td>2505</td><td>45838</td><td><span class="pill danger">26.13 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>bf0d86d0-78d2-4cee-95d7-e9949f5ce0a0-3c9aef7b-e</td><td>2505</td><td>45670</td><td><span class="pill danger">29.57 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>bf0d86d0-78d2-4cee-95d7-e9949f5ce0a0-3c9aef7b-e</td><td>2505</td><td>45659</td><td><span class="pill danger">31.78 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>bf0d86d0-78d2-4cee-95d7-e9949f5ce0a0-3c9aef7b-e</td><td>2505</td><td>45515</td><td><span class="pill danger">31.87 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>bf0d86d0-78d2-4cee-95d7-e9949f5ce0a0-3c9aef7b-e</td><td>2505</td><td>45516</td><td><span class="pill danger">32.02 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>bf0d86d0-78d2-4cee-95d7-e9949f5ce0a0-3c9aef7b-e</td><td>2505</td><td>45421</td><td><span class="pill danger">31.77 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>bf0d86d0-78d2-4cee-95d7-e9949f5ce0a0-3c9aef7b-e</td><td>2505</td><td>45528</td><td><span class="pill danger">31.08 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>bf0d86d0-78d2-4cee-95d7-e9949f5ce0a0-3c9aef7b-e</td><td>2505</td><td>45526</td><td><span class="pill danger">31.65 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>bf0d86d0-78d2-4cee-95d7-e9949f5ce0a0-3c9aef7b-e</td><td>2505</td><td>45427</td><td><span class="pill danger">31.48 min</span></td></tr>
+<tr><td>2026-04-18</td><td>6</td><td>bf0d86d0-78d2-4cee-95d7-e9949f5ce0a0-3c9aef7b-e</td><td>2505</td><td>45806</td><td><span class="pill danger">31.28 min</span></td></tr>
+            </tbody>
+        </table>
+        </div>
+    </div>
+</section>
+
+<section id="data">
+    <div class="section-title">Data Ingestion</div>
+    <div class="panel">
+        <div class="panel-heading">
+            <h3>Dataset Status</h3>
+            <span>Generated file counts</span>
+        </div>
+
+        <div class="info-grid">
+            <div class="info-box">
+                <div class="info-label">Timetable Records</div>
+                <div class="info-value">8066</div>
+            </div>
+            <div class="info-box">
+                <div class="info-label">Update Records</div>
+                <div class="info-value">8066</div>
+            </div>
+            <div class="info-box">
+                <div class="info-label">Processed Records</div>
+                <div class="info-value">8066</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="pipeline">
+    <div class="section-title">Pipeline Activity</div>
+    <div class="panel">
+        <div class="panel-heading">
+            <h3>Latest Execution</h3>
+            <span class="pill success">Completed successfully</span>
+        </div>
+        <div class="info-box">
+            <div class="info-label">Latest pipeline log</div>
+            <div class="info-value" style="font-size:14px">pipeline_20261115_115224.log</div>
+        </div>
+<h4>Recent pipeline output</h4>
+<pre style="white-space:pre-wrap;overflow-wrap:anywhere;font-size:11px;color:#68758c;background:#f7f9fd;padding:15px;border-radius:8px">
+    Scheduled:    2026-04-18T16:52:00Z
+    Actual:       2026-04-18T17:23:59Z
+    Delay:        31.98 min
+
+[10] Route 3W / Trip b0005cd4-3-3c9aef7b-e (vehicle 2504) - 31.87 min late
+    Service date: 2026-04-18
+    Stop:         45122 (sequence 34)
+    Scheduled:    2026-04-18T16:56:10Z
+    Actual:       2026-04-18T17:28:02Z
+    Delay:        31.87 min
+
+... and 105 more not shown (full list: logs/alerts.log in log-only/send mode)
+==========================================
+Pipeline completed successfully at: Sun Nov 15 11:52:25 UTC 2026
+==========================================
+</pre>
+    </div>
+</section>
+
+<div class="footer">
+    TransitIQ · Public Transport Delay Monitoring System<br>
+    Report generated from local project datasets. Historical data, not live tracking.
+</div>
+
+</main>
+</div>
+
+<script>
+const routeSearch = document.getElementById("routeSearch");
+
+routeSearch.addEventListener("input", function () {
+    const query = this.value.toLowerCase();
+
+    document.querySelectorAll("#routeTable tbody tr").forEach(row => {
+        row.style.display = row.innerText.toLowerCase().includes(query)
+            ? ""
+            : "none";
+    });
+});
+</script>
+
+</body>
+</html>

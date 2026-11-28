@@ -6,48 +6,75 @@ ROOT="$(cd "$HERE/.." && pwd)"
 SCRIPT="$ROOT/scripts/process_delays.sh"
 FX="$HERE/fixtures"
 TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
+export CONFIG="$FX/thresholds.conf"   # tests never depend on the team config
 pass=0; fail=0
 ok()  { echo "PASS: $1"; pass=$((pass+1)); }
 bad() { echo "FAIL: $1"; fail=$((fail+1)); }
 
 # 1. Main fixture: output file and summary counts
-"$SCRIPT" "$FX/timetable.csv" "$FX/live_updates.csv" "$TMP/out.csv" 2> "$TMP/summary.txt"
+"$SCRIPT" "$FX/timetable.csv" "$FX/live_updates.csv" "$TMP/out.csv" >/dev/null 2> "$TMP/summary.txt"
 diff -u "$FX/expected_output.csv" "$TMP/out.csv"      && ok "output matches expected"  || bad "output differs"
 diff -u "$FX/expected_summary.txt" "$TMP/summary.txt" && ok "summary matches expected" || bad "summary differs"
 
 # 2. Custom thresholds change classification (3/6 instead of 5/15)
 printf 'ON_TIME_MAX_MIN=3\nMAJOR_DELAY_MIN=6\n' > "$TMP/t.conf"
-CONFIG="$TMP/t.conf" "$SCRIPT" "$FX/timetable.csv" "$FX/live_updates.csv" "$TMP/out2.csv" 2>/dev/null
+CONFIG="$TMP/t.conf" "$SCRIPT" "$FX/timetable.csv" "$FX/live_updates.csv" "$TMP/out2.csv" >/dev/null 2>&1
 grep -q ',6.00,MAJOR_DELAY,' "$TMP/out2.csv" && grep -q ',5.00,DELAYED,' "$TMP/out2.csv" \
   && ok "custom thresholds respected" || bad "custom thresholds ignored"
 
 # 3. Bad config: thresholds in wrong order -> exit 1
 printf 'ON_TIME_MAX_MIN=10\nMAJOR_DELAY_MIN=5\n' > "$TMP/bad.conf"
-CONFIG="$TMP/bad.conf" "$SCRIPT" "$FX/timetable.csv" "$FX/live_updates.csv" "$TMP/o3.csv" 2>/dev/null
+CONFIG="$TMP/bad.conf" "$SCRIPT" "$FX/timetable.csv" "$FX/live_updates.csv" "$TMP/o3.csv" >/dev/null 2>&1
 [[ $? -eq 1 ]] && ok "bad config rejected (exit 1)" || bad "bad config not rejected"
 
 # 4. Non-numeric threshold -> exit 1
 printf 'ON_TIME_MAX_MIN=abc\nMAJOR_DELAY_MIN=15\n' > "$TMP/bad2.conf"
-CONFIG="$TMP/bad2.conf" "$SCRIPT" "$FX/timetable.csv" "$FX/live_updates.csv" "$TMP/o4.csv" 2>/dev/null
+CONFIG="$TMP/bad2.conf" "$SCRIPT" "$FX/timetable.csv" "$FX/live_updates.csv" "$TMP/o4.csv" >/dev/null 2>&1
 [[ $? -eq 1 ]] && ok "non-numeric threshold rejected" || bad "non-numeric threshold accepted"
 
 # 5. Missing input file -> exit 1, no output file left behind
-"$SCRIPT" "$TMP/nope.csv" "$FX/live_updates.csv" "$TMP/o5.csv" 2>/dev/null
+"$SCRIPT" "$TMP/nope.csv" "$FX/live_updates.csv" "$TMP/o5.csv" >/dev/null 2>&1
 [[ $? -eq 1 && ! -e "$TMP/o5.csv" ]] && ok "missing file -> exit 1, no output" || bad "missing file handling"
 
 # 6. Wrong header -> exit 2
 printf 'a,b,c\n1,2,3\n' > "$TMP/wronghdr.csv"
-"$SCRIPT" "$TMP/wronghdr.csv" "$FX/live_updates.csv" "$TMP/o6.csv" 2>/dev/null
+"$SCRIPT" "$TMP/wronghdr.csv" "$FX/live_updates.csv" "$TMP/o6.csv" >/dev/null 2>&1
 [[ $? -eq 2 ]] && ok "wrong header -> exit 2" || bad "wrong header not caught"
 
 # 7. Header-only live file -> header-only output, exit 0
 head -n1 "$FX/live_updates.csv" > "$TMP/emptylive.csv"
-"$SCRIPT" "$FX/timetable.csv" "$TMP/emptylive.csv" "$TMP/o7.csv" 2>/dev/null
+"$SCRIPT" "$FX/timetable.csv" "$TMP/emptylive.csv" "$TMP/o7.csv" >/dev/null 2>&1
 [[ $? -eq 0 && $(wc -l < "$TMP/o7.csv") -eq 1 ]] && ok "empty live file -> header only" || bad "empty live file handling"
 
 # 8. CRLF line endings are tolerated
 sed 's/$/\r/' "$FX/timetable.csv" > "$TMP/tt_crlf.csv"; sed 's/$/\r/' "$FX/live_updates.csv" > "$TMP/lv_crlf.csv"
-"$SCRIPT" "$TMP/tt_crlf.csv" "$TMP/lv_crlf.csv" "$TMP/o8.csv" 2>/dev/null
+"$SCRIPT" "$TMP/tt_crlf.csv" "$TMP/lv_crlf.csv" "$TMP/o8.csv" >/dev/null 2>&1
 diff -q "$FX/expected_output.csv" "$TMP/o8.csv" >/dev/null && ok "CRLF input handled" || bad "CRLF input mishandled"
+
+# 9. Prints "starting" and "done" on success; no "done" on failure
+OUT9="$("$SCRIPT" "$FX/timetable.csv" "$FX/live_updates.csv" "$TMP/o9.csv" 2>/dev/null)"
+[[ "$OUT9" == *"process_delays: starting"* && "$OUT9" == *"process_delays: done"* ]] \
+  && ok "prints starting and done lines" || bad "missing starting/done lines"
+FAIL9="$("$SCRIPT" "$TMP/nope.csv" "$FX/live_updates.csv" "$TMP/o10.csv" 2>/dev/null)"
+[[ "$FAIL9" == *"starting"* && "$FAIL9" != *"done"* ]] && ok "no done line on failure" || bad "done printed despite failure"
+
+# 10. Runs from any working directory (no hardcoded paths)
+( cd / && "$SCRIPT" "$FX/timetable.csv" "$FX/live_updates.csv" "$TMP/o11.csv" >/dev/null 2>&1 )
+diff -q "$FX/expected_output.csv" "$TMP/o11.csv" >/dev/null && ok "works from another directory" || bad "depends on working directory"
+
+# 11. Reads thresholds from a shared config.sh-style file (export, comments, other variables)
+cat > "$TMP/shared_config.sh" <<'CFG'
+#!/usr/bin/env bash
+LOG_DIR=logs
+export ON_TIME_MAX_MIN=3   # minutes
+export MAJOR_DELAY_MIN="6"
+CFG
+CONFIG="$TMP/shared_config.sh" "$SCRIPT" "$FX/timetable.csv" "$FX/live_updates.csv" "$TMP/o12.csv" >/dev/null 2>&1
+grep -q ',6.00,MAJOR_DELAY,' "$TMP/o12.csv" && ok "reads thresholds from config.sh-style file" || bad "config.sh-style file not parsed"
+
+# 12. Config without the thresholds fails clearly (exit 1)
+printf 'LOG_DIR=logs\n' > "$TMP/empty_config.sh"
+CONFIG="$TMP/empty_config.sh" "$SCRIPT" "$FX/timetable.csv" "$FX/live_updates.csv" "$TMP/o13.csv" >/dev/null 2>&1
+[[ $? -eq 1 ]] && ok "config missing thresholds -> exit 1" || bad "missing thresholds not caught"
 
 echo; echo "$pass passed, $fail failed"; [[ $fail -eq 0 ]]

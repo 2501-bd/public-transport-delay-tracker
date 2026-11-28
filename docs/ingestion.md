@@ -64,6 +64,16 @@ The generated CSV uses this header:
 
 The output is compatible with the input contract expected by the processing module.
 
+The output file is generated at `data/live_updates.csv`.
+
+Each JSON record is converted into one CSV row. The output contains the same number of data records as the validated JSON input.
+
+For the current sample dataset:
+- Timetable records: 8,066
+- Live-update records: 8,066
+- Generated output records: 8,066
+
+
 ## 7. Error Handling
 
 The script handles:
@@ -97,7 +107,15 @@ LIVE_JSON=/path/to/live_updates.json \
 LIVE_CSV=/path/to/output.csv \
 ./scripts/ingest.sh
 ```
+### 8.1 Integration with Person 2
 
+After successful ingestion, the standardized file is available at:
+
+`data/live_updates.csv`
+
+Person 2's delay-processing module should consume this file using the agreed field names and data contract.
+
+The ingestion module does not calculate delay minutes. It prepares and validates the input for downstream processing.
 ## 9. Data Source and Limitations
 
 The current live-update JSON feed is simulated by converting records from the available processed dataset into the required JSON structure.
@@ -105,6 +123,12 @@ The current live-update JSON feed is simulated by converting records from the av
 It is not a direct connection to a real-time public transport API. The simulated feed allows the ingestion and validation workflow to be demonstrated and tested.
 
 A live API connection can be added when a suitable transport data provider is available.
+### Current limitations
+
+- The current implementation uses a simulated JSON feed.
+- No external API request or curl-based fetching is currently implemented.
+- Date and timestamp validation checks the expected format, not the actual calendar validity of dates.
+- The current CSV validation assumes comma-separated fields without quoted commas.
 
 ## 10. Testing
 

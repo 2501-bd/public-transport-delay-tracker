@@ -1,5 +1,4 @@
-#!/usr/bin/env bash
-
+#!/bin/bash
 # Public Transport Timetable & Delay Tracker
 # Person 1: Data Ingestion
 
